@@ -1,7 +1,8 @@
 import mintapi
 import os
-from datetime import date, timedelta, datetime
+from datetime import date, timedelta
 
+EXPENSE_CATEGORY_TYPE = 'EXPENSE'
 
 def main():
     mint = mintapi.Mint(
@@ -10,9 +11,7 @@ def main():
         mfa_method='soft-token',
         mfa_token=os.environ.get("MFA_TOKEN"),
         headless=True,
-        wait_for_sync=True,
-        wait_for_sync_timeout=300,
-        fail_if_stale=True,
+        wait_for_sync=False,
     )
 
     print(get_previous_month_leftover(mint.get_budget_data()))
@@ -42,7 +41,10 @@ def get_previous_month_leftover(data):
         if item['rollover'] is True and item['budgetAmount'] > item['amount']:
             continue
 
-        amount_to_invest += item['budgetAmount'] - item['amount']
+        if item['category']['categoryType'] == EXPENSE_CATEGORY_TYPE:
+            amount_to_invest += item['budgetAmount'] - item['amount']
+        else:
+            amount_to_invest += item['amount'] - item['budgetAmount']
 
     return round(amount_to_invest, 2)
 
